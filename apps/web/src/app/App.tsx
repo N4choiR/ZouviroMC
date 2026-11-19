@@ -3,8 +3,16 @@ import {
   CodeEditor,
   type CodeLanguage,
 } from "../components/editor/CodeEditor";
+import { processJson, type JsonOperation } from "../engines/browser/json.engine";
 
 type Theme = "dark" | "light";
+type Indentation = 2 | 4;
+
+type OperationStatus = {
+  type: "success" | "error";
+  operation: JsonOperation;
+  message: string;
+};
 
 const languages: { id: CodeLanguage; label: string }[] = [
   { id: "html", label: "HTML" },
@@ -105,25 +113,38 @@ function App() {
 
   const [language, setLanguage] = useState<CodeLanguage>("html");
 
-  // Independent source code for every language.
   const [codes, setCodes] =
     useState<Record<CodeLanguage, string>>(initialCode);
 
-  // Independent output for every language.
   const [outputs, setOutputs] =
     useState<Record<CodeLanguage, string>>(emptyOutputs);
 
+  const [indentation, setIndentation] = useState<Indentation>(2);
+
+  const [statuses, setStatuses] =
+    useState<Partial<Record<CodeLanguage, OperationStatus>>>({});
+
   const source = codes[language];
   const output = outputs[language];
+  const status = statuses[language];
 
   const setSource = (value: string) => {
     setCodes((current) => ({
       ...current,
       [language]: value,
     }));
+
+    setStatuses((current) => ({
+      ...current,
+      [language]: undefined,
+    }));
+
+    setOutputs((current) => ({
+      ...current,
+      [language]: "",
+    }));
   };
 
-  // Clear only the selected language.
   const clearCurrentLanguage = () => {
     setCodes((current) => ({
       ...current,
@@ -133,6 +154,33 @@ function App() {
     setOutputs((current) => ({
       ...current,
       [language]: "",
+    }));
+
+    setStatuses((current) => ({
+      ...current,
+      [language]: undefined,
+    }));
+  };
+
+  const handleJsonOperation = (operation: JsonOperation) => {
+    if (language !== "json") return;
+
+    const result = processJson(source, operation, indentation);
+
+    if (result.success && operation !== "validate") {
+      setOutputs((current) => ({
+        ...current,
+        json: result.output,
+      }));
+    }
+
+    setStatuses((current) => ({
+      ...current,
+      json: {
+        type: result.success ? "success" : "error",
+        operation,
+        message: result.message,
+      },
     }));
   };
 
@@ -150,6 +198,15 @@ function App() {
 
   const sourceSize = new Blob([source]).size;
   const outputSize = new Blob([output]).size;
+
+  const reductionPercent =
+    status?.operation === "minify" &&
+    status.type === "success" &&
+    sourceSize > 0
+      ? Math.max(0, ((sourceSize - outputSize) / sourceSize) * 100)
+      : null;
+
+  const isJson = language === "json";
 
   return (
     <main className="min-h-screen px-4 py-5 sm:px-7 lg:px-10">
@@ -384,35 +441,80 @@ function App() {
 
         {/* Toolbar */}
         <section className="mc-panel mt-4 flex flex-wrap items-center justify-between gap-4 p-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold">Code Actions</p>
 
             <p className="mt-1 text-xs mc-muted">
-              Processing engines will be connected in the next stage.
+              {isJson
+                ? "JSON processing runs locally in your browser."
+                : "Processing engine for this language is coming soon."}
             </p>
+
+            {status && (
+              <p
+                role="status"
+                aria-live="polite"
+                className="mt-3 text-xs font-medium"
+                style={{
+                  color:
+                    status.type === "success"
+                      ? "var(--color-success)"
+                      : "var(--color-danger, #ef4444)",
+                }}
+              >
+                {status.type === "success" ? "✓ " : "⚠ "}
+                {status.message}
+              </p>
+            )}
+
+            {reductionPercent !== null && (
+              <p className="mt-1 text-xs mc-secondary">
+                Size reduction: {reductionPercent.toFixed(2)}%
+              </p>
+            )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {isJson && (
+              <label className="flex items-center gap-2 text-xs mc-secondary">
+                Indent
+                <select
+                  value={indentation}
+                  onChange={(event) =>
+                    setIndentation(Number(event.target.value) as Indentation)
+                  }
+                  className="mc-button"
+                  aria-label="JSON indentation"
+                >
+                  <option value={2}>2 spaces</option>
+                  <option value={4}>4 spaces</option>
+                </select>
+              </label>
+            )}
+
             <button
               className="mc-button mc-button-primary"
-              disabled
-              title="Coming in the next stage"
+              disabled={!isJson}
+              title={isJson ? "Minify JSON" : "Coming soon for this language"}
+              onClick={() => handleJsonOperation("minify")}
             >
               ✦ Minify
             </button>
 
             <button
               className="mc-button"
-              disabled
-              title="Coming in the next stage"
+              disabled={!isJson}
+              title={isJson ? "Beautify JSON" : "Coming soon for this language"}
+              onClick={() => handleJsonOperation("beautify")}
             >
               ↗ Beautify
             </button>
 
             <button
               className="mc-button"
-              disabled
-              title="Coming in the next stage"
+              disabled={!isJson}
+              title={isJson ? "Validate JSON" : "Coming soon for this language"}
+              onClick={() => handleJsonOperation("validate")}
             >
               ✓ Validate
             </button>
