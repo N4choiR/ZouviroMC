@@ -194,3 +194,41 @@ textarea:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+/* ========================================
+   MiniCode Editor Layout
+======================================== */
+
+.cm-editor {
+  height: 100%;
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.mc-editor-shell {
+  min-height: 340px;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+
+.mc-editor-shell .cm-scroller {
+  overflow: auto;
+}
+
+.mc-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 767px) {
+  .mc-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-editor-shell {
+    min-height: 300px;
+  }
+}
