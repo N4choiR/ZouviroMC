@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CodeEditor, type CodeLanguage } from "../components/editor/CodeEditor";
 import { processJson } from "../engines/browser/json.engine";
 import { processHtml } from "../engines/browser/html.engine";
+import { processCss } from "../engines/browser/css.engine";
 
 type Theme = "dark" | "light";
 type Indentation = 2 | 4;
@@ -117,7 +118,8 @@ function App() {
   const status = statuses[language];
   const isJson = language === "json";
   const isHtml = language === "html";
-  const isSupported = isJson || isHtml;
+  const isCss = language === "css";
+  const isSupported = isJson || isHtml || isCss;
 
   const setSource = (value: string) => {
     setCodes((current) => ({ ...current, [language]: value }));
@@ -138,7 +140,9 @@ function App() {
 
     const result = isHtml
       ? processHtml(source, operation)
-      : processJson(source, operation, indentation);
+      : isCss
+        ? processCss(source, operation, indentation)
+        : processJson(source, operation, indentation);
 
     if (result.success && operation !== "validate") {
       setOutputs((current) => ({
@@ -278,7 +282,7 @@ function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {isJson && (
+            {(isJson || isCss) && (
               <label className="flex items-center gap-2 text-xs mc-secondary">
                 Indent
                 <select
@@ -287,7 +291,7 @@ function App() {
                     setIndentation(Number(event.target.value) as Indentation)
                   }
                   className="mc-button mc-indent-select"
-                  aria-label="JSON indentation"
+                  aria-label={`${language.toUpperCase()} indentation`}
                 >
                   <option value={2}>2 spaces</option>
                   <option value={4}>4 spaces</option>
