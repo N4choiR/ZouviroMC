@@ -1,13 +1,14 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CodeEditor, type CodeLanguage } from "../components/editor/CodeEditor";
-import { processJson, type JsonOperation } from "../engines/browser/json.engine";
+import { processJson } from "../engines/browser/json.engine";
+import { processHtml } from "../engines/browser/html.engine";
 
 type Theme = "dark" | "light";
 type Indentation = 2 | 4;
 
 type OperationStatus = {
   type: "success" | "error";
-  operation: JsonOperation;
+  operation: "minify" | "beautify" | "validate";
   message: string;
 };
 
@@ -115,6 +116,8 @@ function App() {
   const output = outputs[language];
   const status = statuses[language];
   const isJson = language === "json";
+  const isHtml = language === "html";
+  const isSupported = isJson || isHtml;
 
   const setSource = (value: string) => {
     setCodes((current) => ({ ...current, [language]: value }));
@@ -128,18 +131,25 @@ function App() {
     setStatuses((current) => ({ ...current, [language]: undefined }));
   };
 
-  const handleJsonOperation = (operation: JsonOperation) => {
-    if (!isJson) return;
+  const handleOperation = (
+    operation: "minify" | "beautify" | "validate",
+  ) => {
+    if (!isSupported) return;
 
-    const result = processJson(source, operation, indentation);
+    const result = isHtml
+      ? processHtml(source, operation)
+      : processJson(source, operation, indentation);
 
     if (result.success && operation !== "validate") {
-      setOutputs((current) => ({ ...current, json: result.output }));
+      setOutputs((current) => ({
+        ...current,
+        [language]: result.output,
+      }));
     }
 
     setStatuses((current) => ({
       ...current,
-      json: {
+      [language]: {
         type: result.success ? "success" : "error",
         operation,
         message: result.message,
@@ -238,12 +248,12 @@ function App() {
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold">Code Actions</p>
               <span className="mc-toolbar-mode">
-                {isJson ? "JSON" : "Coming soon"}
+                {isSupported ? language.toUpperCase() : "Coming soon"}
               </span>
             </div>
 
             <p className="mt-1 text-xs mc-muted">
-              {isJson
+              {isSupported
                 ? "Processing runs locally in your browser."
                 : "Processing engine for this language is coming soon."}
             </p>
@@ -287,27 +297,27 @@ function App() {
 
             <button
               className="mc-button mc-button-primary"
-              disabled={!isJson}
-              title={isJson ? "Minify JSON" : "Coming soon for this language"}
-              onClick={() => handleJsonOperation("minify")}
+              disabled={!isSupported}
+              title={isSupported ? `Minify ${language.toUpperCase()}` : "Coming soon for this language"}
+              onClick={() => handleOperation("minify")}
             >
               ✦ Minify
             </button>
 
             <button
               className="mc-button"
-              disabled={!isJson}
-              title={isJson ? "Beautify JSON" : "Coming soon for this language"}
-              onClick={() => handleJsonOperation("beautify")}
+              disabled={!isSupported}
+              title={isSupported ? `Beautify ${language.toUpperCase()}` : "Coming soon for this language"}
+              onClick={() => handleOperation("beautify")}
             >
               ↗ Beautify
             </button>
 
             <button
               className="mc-button"
-              disabled={!isJson}
-              title={isJson ? "Validate JSON" : "Coming soon for this language"}
-              onClick={() => handleJsonOperation("validate")}
+              disabled={!isSupported}
+              title={isSupported ? `Validate ${language.toUpperCase()}` : "Coming soon for this language"}
+              onClick={() => handleOperation("validate")}
             >
               ✓ Validate
             </button>
