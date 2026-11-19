@@ -232,3 +232,38 @@ textarea:focus-visible {
     min-height: 300px;
   }
 }
+
+/* ========================================
+   MiniCode - Fixed CodeMirror Editor Height
+======================================== */
+
+.mc-code-editor {
+  display: block !important;
+  width: 100% !important;
+  height: clamp(320px, 55vh, 480px) !important;
+  min-height: 0 !important;
+  max-height: 480px !important;
+  overflow: hidden !important;
+  contain: layout paint;
+}
+
+.mc-code-editor .cm-editor {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.mc-code-editor .cm-scroller {
+  height: 100% !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 767px) {
+  .mc-code-editor {
+    height: 360px !important;
+    max-height: 360px !important;
+  }
+}

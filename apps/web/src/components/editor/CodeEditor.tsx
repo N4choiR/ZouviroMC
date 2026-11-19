@@ -179,7 +179,7 @@ export function CodeEditor({
   return (
     <div
       ref={containerRef}
-      className="mc-code-editor h-full min-h-[280px] overflow-hidden"
+      className="mc-code-editor w-full min-h-0 overflow-hidden"
     >
       {!value && (
         <span className="sr-only">{placeholder}</span>
@@ -187,3 +187,6 @@ export function CodeEditor({
     </div>
   );
 }
+
+
+
