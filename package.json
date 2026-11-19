@@ -1,0 +1,16 @@
+﻿{
+  "name": "minicode",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/api",
+    "packages/core"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@minicode/web",
+    "dev:web": "npm run dev --workspace=@minicode/web",
+    "dev:api": "npm run dev --workspace=@minicode/api",
+    "build": "npm run build --workspaces --if-present"
+  }
+}
